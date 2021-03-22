@@ -6,6 +6,7 @@ This code *works* but it's rather basic, I'll work more on it when I have the ti
 # Features
 - Simple TTK GUI with the Breeze theme.
 - Will modify the configuration file (Config.jsonc) for each platform, by enabling or disabling injection and replication and by adding or removing id's from the blacklist.
+- Pictures bloody everywhere 😄
 
 # Missing features
 - Better feedback to the user.
