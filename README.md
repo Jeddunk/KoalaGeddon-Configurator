@@ -8,6 +8,10 @@ This code *works* but it's rather basic, I'll work more on it when I have the ti
 - Will modify the configuration file (Config.jsonc) for each platform, by enabling or disabling injection and replication and by adding or removing id's from the blacklist.
 - Pictures bloody everywhere 😄
 
+# Installation/Usage
+- Just download and the compiled binaries from [here](https://github.com/g-yui/KoalaGeddon-Configurator/releases).
+- You can run from source without need for a specific pyenv, just use pip to install Pillow and TtkThemes and run main.py.
+
 # Missing features
 - Better feedback to the user.
 - More checks for IDs.
