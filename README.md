@@ -9,7 +9,7 @@ This code *works* but it's rather basic, I'll work more on it when I have the ti
 - Pictures bloody everywhere 😄
 
 # Installation/Usage
-- Just download and the compiled binaries from [here](https://github.com/g-yui/KoalaGeddon-Configurator/releases).
+- Just download and run the compiled binaries from [here](https://github.com/g-yui/KoalaGeddon-Configurator/releases).
 - You can run from source without need for a specific pyenv, just use pip to install Pillow and TtkThemes and run main.py.
 
 # Missing features
