@@ -11,11 +11,7 @@ from tkinter.filedialog import askopenfilename
 import json
 
 version = 1.0
-
-
 # Different classes used by the GUI, these are for calling what their titles suggest #
-
-
 class frames:  # Collection of frames packed to root #
     @staticmethod
     def left(anchor):
@@ -49,7 +45,6 @@ var_en_origin = None
 var_rep_steam = None
 var_rep_epic = None
 var_rep_origin = None
-
 # Some variables for id and blacklist values, they are all lists #
 appid = []
 dlc_id = []
@@ -60,7 +55,6 @@ var_blacklist_origin = []
 
 
 class steam_values:
-
     @staticmethod
     def enable(en_or_dis):  # Enabled or disable injection.
         global var_en_steam
@@ -77,7 +71,6 @@ class steam_values:
     def app_id():  # Id of DLC
         id_steam = appid_enter.get()
         appid.append(id_steam)  # Appends to list with id values.
-
     @staticmethod
     def blacklist(yes_or_no):  # Blacklist or not
         var_blacklist_steam.append(yes_or_no)  # Appends to list of blacklists in the same order as the id's
@@ -87,7 +80,6 @@ class steam_values:
 
 
 class epic_values:
-
     @staticmethod
     def enable(en_or_dis):
         global var_en_epic
@@ -142,24 +134,33 @@ class origin_values:
 class paths:
     @staticmethod
     def get_path():  # Gets path from current running script.
-        return os.path.dirname(sys.argv[0])
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = str(os.path.dirname(sys.argv[0]))
+
+        return pathlib.Path(base_path)
 
     @staticmethod
     def get_json_path():
         try:
-            access_registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+            access_registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
             access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
             # accessing the key to open the registry directories under
-            x = winreg.EnumValue(access_key, 0)
-            data = x[1] + "\Config.jsonc"
+            x = winreg.QueryValueEx(access_key, "WORKING_DIR")
+            dir = x[0]
+            data = dir + "\Config.jsonc"
             return data
+
         except FileNotFoundError:
             try:  # Prior line will be deleted on next Koalageddon version
-                access_registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+                access_registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
                 access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
                 # accessing the key to open the registry directories under
-                x = winreg.EnumValue(access_key, 0)
-                data = x[1] + "\Config.jsonc"
+                x = winreg.QueryValueEx(access_key, "WORKING_DIR")
+                dir = x[0]
+                data = dir + "\Config.jsonc"
                 return data
             except FileNotFoundError:
                 if os.path.exists(paths.get_path() + "/json_path.txt"):  # If already specified by user
@@ -180,8 +181,6 @@ class paths:
                     else:
                         messagebox.showerror("Error", "Please select a valid config file")
                         return 0  # The user will have to pick the option again to select a valid config file #
-
-
 class json_file:  # This is the config file itself, it's handling, backup, etc.
     @staticmethod
     def error_handling():  # To deal with comments if they exist, because while the nlohmann JSON library can parse
@@ -227,7 +226,6 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
     def backup():  # Backs it up! Also checks for itself, maybe i'll add the option of multiple backups in the future
         if paths.get_json_path() == 0:
             return 0  # To not get the user stuck on a loop if they cancel the operation
-
         data = json_file.get_data()
 
         if os.path.exists(paths.get_json_path().replace("Config.jsonc", "Config_o.jsonc")):
@@ -271,7 +269,6 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 commit["platforms"]["Steam"]["replicate"] = replicate_steam
             to_add = []
             index = 0
-
             if blacklist_steam is False:
                 print("Skip")
                 skip_value = skip_value + 1
@@ -315,7 +312,6 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 commit["platforms"]["Epic Games"]["replicate"] = replicate_epic
             to_add = []
             index = 0
-
             if blacklist_epic is False:
                 print("Skip")
                 skip_value = skip_value + 1
@@ -360,7 +356,6 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 commit["platforms"]["Origin"]["replicate"] = replicate_origin
             to_add = []
             index = 0
-
             if blacklist_origin is False:
                 print("Skip")
                 skip_value = skip_value + 1
@@ -391,21 +386,17 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
 
 # Logo preload, done for performance #
 self_path = str(paths.get_path())  # Path of current script
-
 steam_logo = Image.open(self_path + "/logos/steam.png")
 epic_logo = Image.open(self_path + "/logos/epic.png")
 origin_logo = Image.open(self_path + "/logos/origin.png")
 
 # Resize to adequate size, if High DPI is to be added, this will have to be changed accordingly.
-
 steam_logo_resize = steam_logo.resize((160, 50), Image.ANTIALIAS)
 epic_logo_resize = epic_logo.resize((120, 100), Image.ANTIALIAS)
 origin_logo_resize = origin_logo.resize((150, 58), Image.ANTIALIAS)
 
 
 class logo:  # These are the logos for the supported platforms, it automatically packs them :D}
-    self_path = str(paths.get_path())  # Path of current script
-
     @staticmethod
     def steam(frame_self, x, y):  # Frame, padx and pady values.
         logo_itself = ImageTk.PhotoImage(steam_logo_resize)
@@ -508,7 +499,6 @@ class destroy_rebuild:  # This function will delete or reset stuff
     def widget_destroy(*widget):  # This function destroys any widgets specified on call
         for widget in widget:
             widget.destroy()  # Is it just me or has the word widget lost it's meaning with this function?
-
     @staticmethod
     def frame_rebuild(*self):  # Function that destroys all frames and child widgets, this effectively lets me change
         # the widgets displayed, it will also reset values if self is true
@@ -589,7 +579,6 @@ class preview_window:
         replicate = "No changes were made"
         blacklist = "No changes were made"
         ids = "No changes were made"
-
         if var_en_show:
             enable = var_en_show
         if var_rep_show:
@@ -602,12 +591,13 @@ class preview_window:
         enable_lbl = "Enable DLL injection: " + enable
         replicate_lbl = "Enable replication: " + replicate
         blacklist_lbl = "List of removals from or additions to the blacklist: " + str(blacklist).replace("remove_"
-        "blacklist", "Removal").replace("blacklist", "Addition").replace("[", "").replace("]", "")
+                                                                                                         "blacklist",
+                                                                                                         "Removal").replace(
+            "blacklist", "Addition").replace("[", "").replace("]", "")
         ids_lbl = "List of ID's to remove or add to the blacklist: " + str(ids).replace("[", "").replace("]", "")
 
         if not ids:  # Patch for bad coding skill :(
             ids_lbl = "List of ID's to remove or add to the blacklist: No changes were made"
-
         common_widgets.label(frame, enable_lbl, 5, 15, 0)
         common_widgets.label(frame, replicate_lbl, 5, 5, 0)
         common_widgets.separator(frame, "horizontal", "x", 5, 5)
@@ -627,16 +617,12 @@ class preview_window:
 
 # The way this GUI is coded is, in essence, the calling collections of widgets, they are enumerated mainly because
 # my IDE wouldn't stop bothering me about their names, as such, they will be defined in a annexed comment.
-
-
 def main_window():  # Ttk root and TtkThemes definitions
     # Begin window #
     global root
     root = themed(theme='breeze')  # You can change the theme to one of your liking if you so wish :D
-
     # Tested on 720p resolution, if you wish to add high dpi support you may fork it and push a PR, as I have no means
     # to properly test such a feature.
-
     root.resizable(height=False, width=False)
     root.title(f'KG-GUI Version {version}')
     root.iconbitmap(default=str(paths.get_path()) + "/logos/acidi.ico")
@@ -678,21 +664,17 @@ def widgets():  # Initial window's widgets
 def steam_widget():
     logo.steam(frame, 15, 15)
     common_widgets.change_size(1000, 300)  # Top left and top right for more options if need be ;)
-
     # Enable or Disable injection
-
     common_widgets.label(left_frame, "Enable or disable DDL injection", 5, 5, N)
     common_widgets.button(left_frame, "Enable", lambda *args: steam_values.enable("enable"), 5, 5)
     common_widgets.button(left_frame, "Disable", lambda *args: steam_values.enable("disable"), 5, 5)
 
     # Replicate or not
-
     common_widgets.label(right_frame, "Enable or disable replication", 5, 5, N)
     common_widgets.button(right_frame, "Enable", lambda *args: steam_values.replicate("enable"), 5, 5, N)
     common_widgets.button(right_frame, "Disable", lambda *args: steam_values.replicate("disable"), 5, 5)
 
     # Blacklist or remove from same, and AppID
-
     common_widgets.label(frame, "AppID to blacklist or remove from blacklist", 5, 5, 0)
     common_widgets.button(low_frame, "Blacklist", lambda *args: steam_values.blacklist("blacklist"), 5, 5)
 
@@ -721,19 +703,16 @@ def epic_widget():
     common_widgets.change_size(1000, 315)
 
     # Enable or Disable injection
-
     common_widgets.label(left_frame, "Enable or disable DDL injection", 5, 5, N)
     common_widgets.button(left_frame, "Enable", lambda *args: epic_values.enable("enable"), 5, 5)
     common_widgets.button(left_frame, "Disable", lambda *args: epic_values.enable("disable"), 5, 5)
 
     # Replicate or not
-
     common_widgets.label(right_frame, "Enable or disable replication", 5, 5, N)
     common_widgets.button(right_frame, "Enable", lambda *args: epic_values.replicate("enable"), 5, 5)
     common_widgets.button(right_frame, "Disable", lambda *args: epic_values.replicate("disable"), 5, 5)
 
     # Blacklist or remove from same, and AppID
-
     common_widgets.label(frame, "DLC ID to blacklist or remove from blacklist", 5, 5, 0)
     common_widgets.button(low_frame, "Blacklist", lambda *args: epic_values.blacklist("blacklist"), 5, 5)
 
@@ -762,19 +741,16 @@ def origin_widget():
     common_widgets.change_size(1000, 300)
 
     # Enable or Disable injection
-
     common_widgets.label(left_frame, "Enable or disable DDL injection", 5, 5, N)
     common_widgets.button(left_frame, "Enable", lambda *args: origin_values.enable("enable"), 5, 5)
     common_widgets.button(left_frame, "Disable", lambda *args: origin_values.enable("disable"), 5, 5)
 
     # Replicate or not
-
     common_widgets.label(right_frame, "Enable or disable replication", 5, 5, N)
     common_widgets.button(right_frame, "Enable", lambda *args: origin_values.replicate("enable"), 5, 5)
     common_widgets.button(right_frame, "Disable", lambda *args: origin_values.replicate("disable"), 5, 5)
 
     # Blacklist or remove from same, and AppID
-
     common_widgets.label(frame, "Item ID to blacklist or remove from blacklist", 5, 5, 0)
     common_widgets.button(low_frame, "Blacklist", lambda *args: origin_values.blacklist("blacklist"), 5, 5)
 
@@ -865,7 +841,6 @@ def commit_changes(platform):
                 enable_steam = True
             else:
                 enable_steam = False
-
         if not var_rep_steam:
             replicate_steam = "Skip"
         else:
@@ -873,7 +848,6 @@ def commit_changes(platform):
                 replicate_steam = True
             elif var_rep_steam == "disable":
                 replicate_steam = False
-
         if not var_blacklist_steam:
             blacklist_steam = False
         else:
@@ -903,7 +877,6 @@ def commit_changes(platform):
                 enable_epic = True
             else:
                 enable_epic = False
-
         if not var_rep_epic:
             replicate_epic = "Skip"
         else:
@@ -911,7 +884,6 @@ def commit_changes(platform):
                 replicate_epic = True
             elif var_rep_epic == "disable":
                 replicate_epic = False
-
         if not var_blacklist_epic:
             blacklist_epic = False
         else:
@@ -941,7 +913,6 @@ def commit_changes(platform):
                 enable_origin = True
             else:
                 enable_origin = False
-
         if not var_rep_origin:
             replicate_origin = "Skip"
         else:
@@ -949,7 +920,6 @@ def commit_changes(platform):
                 replicate_origin = True
             elif var_rep_origin == "disable":
                 replicate_origin = False
-
         if not var_blacklist_origin:
             blacklist_origin = False
         else:
