@@ -1,5 +1,6 @@
 import sys  # Even if my IDE tells me otherwise, this import is, in fact, used, just once, but it is used :D
 import os
+import winreg
 import pathlib
 from tkinter import *
 from tkinter import ttk
@@ -144,28 +145,39 @@ class paths:
         return os.path.dirname(sys.argv[0])
 
     @staticmethod
-    def get_json_path():  # Gets the json path from the most common install locations.
-        drive = str(pathlib.PureWindowsPath(paths.get_path()).drive).upper()  # I have no other way to get the Drive
-        if os.path.exists(drive + r"\Program Files (x86)\Koalageddon\Config.jsonc"):  # Common Program Files install
-            return str(drive + r"\Program Files (x86)\Koalageddon\Config.jsonc")
-        elif os.path.exists(drive + r"\Users\%userprofile%\Local\Koalageddon\Config.jsonc"):  # Common AppData install
-            return drive + r"\Users\%userprofile%\Local\Koalageddon\Config.jsonc"
-        elif os.path.exists(paths.get_path() + "/json_path.txt"):  # If already specified by user
-            with open(paths.get_path() + "/json_path.txt", "r") as p:
-                json_path_txt = str(p.readline())
-                if os.path.isfile(json_path_txt):
-                    return json_path_txt
+    def get_json_path():
+        try:
+            access_registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+            access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
+            # accessing the key to open the registry directories under
+            x = winreg.EnumValue(access_key, 0)
+            return x[1]
+        except FileNotFoundError:
+            try:  # Prior line will be deleted on next Koalageddon version
+                access_registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+                access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
+                # accessing the key to open the registry directories under
+                x = winreg.EnumValue(access_key, 0)
+                return x[1]
+            except FileNotFoundError:
+                if os.path.exists(paths.get_path() + "/json_path.txt"):  # If already specified by user
+                    with open(paths.get_path() + "/json_path.txt", "r") as p:
+                        json_path_txt = str(p.readline())
+                        if os.path.isfile(json_path_txt):
+                            return json_path_txt
 
-        # If none of the prior ones return it will ask the user #
-        messagebox.showinfo("Config.jsonc not found", "Please select the Koalageddon Config file")
-        path = str(askopenfilename())
-        if "Config.json" in path:
-            with open("json_path.txt", 'w') as p:  # Saves itself as json_path.txt, will overwrite if it already exists
-                p.write(path)
-            return path
-        else:
-            messagebox.showerror("Error", "Please select a valid config file")
-            return 0  # The user will have to pick the option again to select a valid config file #
+                else:
+                    # If none of the prior ones return it will ask the user #
+                    messagebox.showinfo("Config.jsonc not found", "Please select the Koalageddon Config file")
+                    path = str(askopenfilename())
+                    if "Config.json" in path:
+                        with open("json_path.txt",
+                                  'w') as p:  # Saves itself as json_path.txt, will overwrite if it already exists
+                            p.write(path)
+                        return path
+                    else:
+                        messagebox.showerror("Error", "Please select a valid config file")
+                        return 0  # The user will have to pick the option again to select a valid config file #
 
 
 class json_file:  # This is the config file itself, it's handling, backup, etc.
