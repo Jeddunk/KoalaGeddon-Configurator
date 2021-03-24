@@ -151,14 +151,16 @@ class paths:
             access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
             # accessing the key to open the registry directories under
             x = winreg.EnumValue(access_key, 0)
-            return x[1]
+            data = x[1] + "\Config.jsonc"
+            return data
         except FileNotFoundError:
             try:  # Prior line will be deleted on next Koalageddon version
                 access_registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
                 access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
                 # accessing the key to open the registry directories under
                 x = winreg.EnumValue(access_key, 0)
-                return x[1]
+                data = x[1] + "\Config.jsonc"
+                return data
             except FileNotFoundError:
                 if os.path.exists(paths.get_path() + "/json_path.txt"):  # If already specified by user
                     with open(paths.get_path() + "/json_path.txt", "r") as p:
