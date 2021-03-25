@@ -18,7 +18,6 @@ This code *works* but it's rather basic, I'll work more on it when I have the ti
 - An ID searcher.
 
 # Known bugs
-- Broken on release version 1.1.0, will patch soon.
 - Interface can get buggy if too many IDs are changed at once.
 - Rather slugish at times.
 
