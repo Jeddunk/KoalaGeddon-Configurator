@@ -26,4 +26,4 @@ This code *works* but it's rather basic, I'll work more on it when I have the ti
 - TtkThemes, licensed under a GNU GPLv3 compatible License.
 
 # Acknowledgments
-- Acidicoala for the creation of such a great tool.
+- Acidicoala for the creation of such a great tool and the immense help provided for the betterment of this one.
