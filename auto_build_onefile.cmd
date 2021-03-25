@@ -1,0 +1,1 @@
+pyinstaller --noconfirm --onefile --windowed --icon "%CD%/logos/acidi.ico" --name "KG-GUI" --add-data "%CD%/logos;logos/"  "%CD%/main.py"
