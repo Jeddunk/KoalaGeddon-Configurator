@@ -6,6 +6,7 @@ Code is rather bloated at this point, I will reformat it...eventually :)
 # Features
 - Simple TTK GUI with the Breeze theme.
 - Will modify the configuration file (Config.jsonc) for each platform, by enabling or disabling injection and replication and by adding or removing id's from the blacklist.
+- Simple ID searcher for Steam
 - Pictures bloody everywhere 😄
 
 # Installation/Usage
