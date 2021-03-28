@@ -11,7 +11,7 @@ from ttkthemes import ThemedTk as themed
 from PIL import ImageTk, Image
 from tkinter.filedialog import askopenfilename
 
-version = 1.0
+version = 1.1
 # Different classes used by the GUI, these are for calling what their titles suggest #
 class frames:  # Collection of frames packed to root #
     @staticmethod
