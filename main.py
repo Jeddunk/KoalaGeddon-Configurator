@@ -2,13 +2,14 @@ import sys  # Even if my IDE tells me otherwise, this import is, in fact, used, 
 import os
 import winreg
 import pathlib
+import json
+import requests
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from ttkthemes import ThemedTk as themed
 from PIL import ImageTk, Image
 from tkinter.filedialog import askopenfilename
-import json
 
 version = 1.0
 # Different classes used by the GUI, these are for calling what their titles suggest #
@@ -42,16 +43,20 @@ class frames:  # Collection of frames packed to root #
 var_en_steam = None
 var_en_epic = None
 var_en_origin = None
+var_en_uplay = None
 var_rep_steam = None
 var_rep_epic = None
 var_rep_origin = None
+var_rep_uplay = None
 # Some variables for id and blacklist values, they are all lists #
 appid = []
 dlc_id = []
 item_id = []
+uplay_id = []
 var_blacklist_steam = []
 var_blacklist_epic = []
 var_blacklist_origin = []
+var_blacklist_uplay = []
 
 
 class steam_values:
@@ -131,6 +136,32 @@ class origin_values:
         print(item_id)
 
 
+class uplay_values:
+    @staticmethod
+    def enable(en_or_dis):
+        global var_en_uplay
+        var_en_uplay = en_or_dis
+        print(var_en_uplay)
+
+    @staticmethod
+    def replicate(rep_or_not):
+        global var_rep_uplay
+        var_rep_uplay = rep_or_not
+        print(var_rep_uplay)
+
+    @staticmethod
+    def uplay_id():
+        id_uplay = uplay_id_enter.get()
+        uplay_id.append(id_uplay)
+
+    @staticmethod
+    def blacklist(yes_or_no):
+        var_blacklist_uplay.append(yes_or_no)
+        uplay_values.uplay_id()
+        print(var_blacklist_uplay)
+        print(uplay_id)
+
+
 class paths:
     @staticmethod
     def get_path():  # Gets path from current running script.
@@ -144,17 +175,16 @@ class paths:
 
     @staticmethod
     def get_json_path():
-        try:
+        try:  # x64 is more common, that's the only reason it is above x86
             access_registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-            access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
-            # accessing the key to open the registry directories under
+            access_key = winreg.OpenKey(access_registry, r"SOFTWARE\WOW6432Node\acidicoala\Koalageddon")
             (working_dir, _) = winreg.QueryValueEx(access_key, "WORKING_DIR")
             config_path = pathlib.Path(working_dir) / "Config.jsonc"
             return str(config_path)
 
         except FileNotFoundError:
             try:  # Prior line will be deleted on next Koalageddon version
-                access_registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+                access_registry = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
                 access_key = winreg.OpenKey(access_registry, r"SOFTWARE\acidicoala\Koalageddon")
                 # accessing the key to open the registry directories under
                 (working_dir, _) = winreg.QueryValueEx(access_key, "WORKING_DIR")
@@ -201,7 +231,7 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 "// Origin integration with other stores", "").replace("// Ubisoft integration with "
                                                                        "other stores", "").replace("// Steam",
                                                                                                    "").replace(
-                "// Origin", "").replace("// Ubisoft", "")
+                "// Origin", "").replace("// Ubisoft", "").replace("// Use aUplayId from the generated log file", "")
             return data
 
     @staticmethod
@@ -301,13 +331,13 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 print("Skip")
                 skip_value = skip_value + 1
             else:
-                commit["platforms"]["Epic Games"]["enabled"] = enable_epic
+                commit["platforms"]["EpicGames"]["enabled"] = enable_epic
 
             if "Skip" in str(replicate_epic):
                 print("Skip")
                 skip_value = skip_value + 1
             else:
-                commit["platforms"]["Epic Games"]["replicate"] = replicate_epic
+                commit["platforms"]["EpicGames"]["replicate"] = replicate_epic
             to_add = []
             index = 0
             if blacklist_epic is False:
@@ -319,14 +349,14 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                     if "remove" in blacklist_epic[index]:
                         print("Removing")
                         self_dlc_id = dlc_id[index]
-                        self_index = commit["platforms"]["Epic Games"]["blacklist"].index(self_dlc_id)
-                        del commit["platforms"]["Epic Games"]["blacklist"][self_index]
+                        self_index = commit["platforms"]["EpicGames"]["blacklist"].index(self_dlc_id)
+                        del commit["platforms"]["EpicGames"]["blacklist"][self_index]
 
                     elif "remove" not in blacklist_epic[index]:
                         to_add.append(dlc_id[index])
                     index = index + 1
                 if to_add:
-                    commit["platforms"]["Epic Games"]["blacklist"].extend(to_add)
+                    commit["platforms"]["EpicGames"]["blacklist"].extend(to_add)
 
             if skip_value == 3:
                 print("No change")
@@ -334,7 +364,7 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 with open(paths.get_json_path(), "w") as outfile:
                     json.dump(commit, outfile, indent=1)
                     messagebox.showinfo("Success", "The file has been modified")
-                    print(commit["platforms"]["Epic Games"])
+                    print(commit["platforms"]["EpicGames"])
             callback_to.widgets2()
         elif platform == "origin":
             commit = json_file.get_data()
@@ -380,6 +410,227 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                     messagebox.showinfo("Success", "The file has been modified")
                     print(commit["platforms"]["Origin"])
             callback_to.widgets2()
+        elif platform == "uplay":
+            commit = json_file.get_data()
+            skip_value = 0
+            print(enable_uplay)
+            print(replicate_uplay)
+            if "Skip" in str(enable_uplay):
+                print("Skip")
+                skip_value = skip_value + 1
+            else:
+                commit["platforms"]["UplayR1"]["enabled"] = enable_uplay
+
+            if "Skip" in str(replicate_uplay):
+                print("Skip")
+                skip_value = skip_value + 1
+            else:
+                commit["platforms"]["UplayR1"]["replicate"] = replicate_uplay
+            to_add = []
+            index = 0
+            if blacklist_uplay is False:
+                print("Skip")
+                skip_value = skip_value + 1
+            else:
+                for _ in blacklist_uplay:  # This will *in theory* recursively check for each appid and blacklist
+                    # value for each index and resolve if it should add or remove it.
+                    if "remove" in blacklist_origin[index]:
+                        print("Removing")
+                        self_item_id = item_id[index]
+                        self_index = commit["platforms"]["UplayR1"]["blacklist"].index(self_item_id)
+                        del commit["platforms"]["UplayR1"]["blacklist"][self_index]
+
+                    elif "remove" not in blacklist_uplay[index]:
+                        to_add.append(uplay_id[index])
+                    index = index + 1
+                if to_add:
+                    commit["platforms"]["UplayR1"]["blacklist"].extend(to_add)
+
+            if skip_value == 3:
+                print("No change")
+            else:
+                with open(paths.get_json_path(), "w") as outfile:
+                    json.dump(commit, outfile, indent=1)
+                    messagebox.showinfo("Success", "The file has been modified")
+                    print(commit["platforms"]["UplayR1"])
+            callback_to.widgets3()
+
+
+class id_searcher:  # Put together with twigs and tape, I'll clean the code, add some basic multithreading
+    # and a timeout later on.
+    @staticmethod
+    def steam_searcher():
+        global new_window
+        new_window = Toplevel(root)
+        new_window.geometry("800x300")
+        center(new_window)
+        label = ttk.Label(new_window, text="This is a simple ID searcher using the SteamAPI, just place your que"
+                                           "ry and click search\n Do try to be specific though!", justify="center")
+        button = ttk.Button(new_window, text="Search", command=id_searcher.game_parse)
+        exit_button = ttk.Button(new_window, text="Exit", command=lambda: new_window.destroy())
+
+        global key_entry, upper, lower, capitalize, title, results_entry
+        key_entry = ttk.Entry(new_window, width=25, justify="center")
+        key_entry.insert(0, 'Game Name')
+
+        upper = IntVar(value=1)
+        lower = IntVar(value=1)
+        capitalize = IntVar(value=1)
+        title = IntVar(value=1)
+
+        upper_check = ttk.Checkbutton(new_window, width=15, variable=upper, text="All caps")
+        lower_check = ttk.Checkbutton(new_window, width=15, variable=lower, text="All lower-case")
+        capitalize_check = ttk.Checkbutton(new_window, width=15, variable=capitalize, text="Capitalize")
+        title_check = ttk.Checkbutton(new_window, width=15, variable=title, text="Capitalize all")
+        results = ttk.Label(new_window, text="Max number of results")
+        results_entry = ttk.Entry(new_window, width=10, justify="center")
+        results_entry.insert(0, '15')
+
+        separator = ttk.Separator(new_window, orient="horizontal")
+        separator2 = ttk.Separator(new_window, orient="horizontal")
+
+        rows = 0
+        while rows < 10:
+            new_window.rowconfigure(rows, pad=25, weight=5)
+            new_window.columnconfigure(rows, pad=10, weight=1)
+            rows += 1
+        # Row is Y value, Column is X value
+        label.grid(pady=10, column=2, row=0)
+        key_entry.grid(padx=5, pady=5, column=2, row=1)
+        separator.grid(column=2, row=3, sticky="nsew")
+
+        upper_check.grid(column=1, row=4)
+        lower_check.grid(column=3, row=4)
+        capitalize_check.grid(column=1, row=5)
+        title_check.grid(column=3, row=5)
+
+        results.grid(column=2, row=4)
+        results_entry.grid(column=2, row=5)
+
+        separator2.grid(column=2, row=6, sticky="nsew")
+
+        button.grid(column=2, row=2)
+        exit_button.grid(padx=5, pady=5, column=2, row=8)
+
+    @staticmethod
+    def game_parse():
+        key = key_entry.get()
+        if key == "Game Name":
+            messagebox.showinfo("Error", "Please insert the title of a game")
+            new_window.destroy()
+            id_searcher.steam_searcher()
+            return
+        upper_value = upper.get()
+        lower_value = lower.get()
+        capitalize_value = capitalize.get()
+        title_value = title.get()
+        results = results_entry.get()
+        id_searcher.steam(key, upper_value, lower_value, capitalize_value, title_value, results)
+        new_window.destroy()
+
+    @staticmethod
+    def steam(key, upper, lower, capitalize, title, results):
+        response = json.loads(requests.get("https://api.steampowered.com/ISteamApps/GetAppList/v2/").text)
+        data_json = list(response["applist"]["apps"])
+
+        search_key = key
+        search_upper = upper
+        search_lower = lower
+        search_capitalize = capitalize
+        search_title = title
+        search_results = int(results)
+
+        search_list_id = []
+        search_list_name = []
+
+        for x in data_json:  # The prints bellow are for debugging if need be
+            # Raw data
+            if search_key in x["name"]:
+                if search_results == 0:
+                    break
+                search_list_name.append(str(x["name"]))
+                search_list_id.append(str(x["appid"]))
+                # print("Name: {0}, AppID: {1}".format(str(x["name"]), str(x["appid"])))
+                search_results -= 1
+            # All caps
+            if search_key.upper() in x["name"] and search_upper == 1:
+                if search_results == 0:
+                    break
+                search_list_name.append(str(x["name"]))
+                search_list_id.append(str(x["appid"]))
+                # print("Name: {0}, AppID: {1}".format(str(x["name"]), str(x["appid"])))
+                search_results -= 1
+            # All lower case
+            if search_key.lower() in x["name"] and search_lower == 1:
+                if search_results == 0:
+                    break
+                search_list_name.append(str(x["name"]))
+                search_list_id.append(str(x["appid"]))
+                # print("Name: {0}, AppID: {1}".format(str(x["name"]), str(x["appid"])))
+                search_results -= 1
+            # Capitalize first letter
+            if search_key.capitalize() in x["name"] and search_capitalize == 1:
+                if search_results == 0:
+                    break
+                search_list_name.append(str(x["name"]))
+                search_list_id.append(str(x["appid"]))
+                # print("Name: {0}, AppID: {1}".format(str(x["name"]), str(x["appid"])))
+                search_results -= 1
+            # All first letters capitalized
+            if search_key.title() in x["name"] and search_title == 1:
+                if search_results == 0:
+                    break
+                search_list_name.append(str(x["name"]))
+                search_list_id.append(str(x["appid"]))
+                # print("Name: {0}, AppID: {1}".format(str(x["name"]), str(x["appid"])))
+                search_results -= 1
+        # Removal of duplicates
+        name_list = []
+        [name_list.append(x) for x in search_list_name if x not in name_list]
+        id_list = []
+        [id_list.append(x) for x in search_list_id if x not in id_list]
+
+        # GUI
+        view_window = Toplevel(root)
+        view_window.geometry("800x300")
+        center(view_window)
+        game_lbl = ttk.Label(view_window, text='Games', font="30")
+        game_lbl.pack(pady=10)
+
+        scroll = ttk.Scrollbar(view_window)
+        scroll.pack(side=RIGHT, fill=Y)
+        game_list = Listbox(view_window, yscrollcommand=scroll.set, selectmode=SINGLE)
+        index = 0
+        for x in range(1, len(name_list)):
+            game_list.insert(END, "Game: " + name_list[index] + ", Appid: " + id_list[index])
+            index += 1
+        game_list.pack(fill=BOTH)
+        copy_id = None
+        scroll.config(command=game_list.yview)
+
+        def copy_to_clipboard():
+            view_window.clipboard_clear()
+            copy_id = game_list.curselection()
+            id = game_list.get(copy_id[0])
+            copy_id_get = id.index("Appid:") + 6
+            copy_id_get_self = id[copy_id_get:]
+            view_window.clipboard_append(copy_id_get_self)
+            view_window.update()
+            return_to_manager = messagebox.askyesno("Success", "AppID has been copied, do you wish to close the "
+                                                               "searcher?")
+            if return_to_manager:  # Could potentially be annoying, if it is just raise an issue on GitHub
+                view_window.destroy()
+                new_window.destroy()
+            if not return_to_manager:
+                view_window.destroy()
+                new_window.lift()
+
+        copy_bttn = ttk.Button(view_window, command=copy_to_clipboard, text="Copy ID to clipboard")
+        copy_bttn.pack(side=BOTTOM, pady=5, padx=5)
+
+        root.mainloop()
+
+        print("Done")
 
 
 # Logo preload, done for performance #
@@ -387,11 +638,13 @@ self_path = str(paths.get_path())  # Path of current script
 steam_logo = Image.open(self_path + "/logos/steam.png")
 epic_logo = Image.open(self_path + "/logos/epic.png")
 origin_logo = Image.open(self_path + "/logos/origin.png")
+uplay_logo = Image.open(self_path + "/logos/uplay.png")
 
 # Resize to adequate size, if High DPI is to be added, this will have to be changed accordingly.
 steam_logo_resize = steam_logo.resize((160, 50), Image.ANTIALIAS)
 epic_logo_resize = epic_logo.resize((120, 100), Image.ANTIALIAS)
 origin_logo_resize = origin_logo.resize((150, 58), Image.ANTIALIAS)
+uplay_logo_resize = uplay_logo.resize((150, 65), Image.ANTIALIAS)
 
 
 class logo:  # These are the logos for the supported platforms, it automatically packs them :D}
@@ -415,6 +668,13 @@ class logo:  # These are the logos for the supported platforms, it automatically
         origin_string = Label(frame_self, image=logo_itself)
         origin_string.image = logo_itself
         origin_string.pack(padx=x, pady=y)
+
+    @staticmethod
+    def uplay(frame_self, x, y):
+        logo_itself = ImageTk.PhotoImage(uplay_logo_resize)
+        uplay_string = Label(frame_self, image=logo_itself)
+        uplay_string.image = logo_itself
+        uplay_string.pack(padx=x, pady=y)
 
 
 class common_widgets:
@@ -483,14 +743,17 @@ class common_widgets:
 class destroy_rebuild:  # This function will delete or reset stuff
     @staticmethod
     def reset_values(*show):  # Every value stored will be reset unless it is needed
-        global appid, dlc_id, item_id, var_blacklist_steam, var_blacklist_epic, var_blacklist_origin
+        global appid, dlc_id, item_id, uplay_id, var_blacklist_steam, var_blacklist_epic, var_blacklist_origin \
+            , var_blacklist_uplay
 
         appid = []
         dlc_id = []
         item_id = []
+        uplay_id = []
         var_blacklist_steam = []
         var_blacklist_epic = []
         var_blacklist_origin = []
+        var_blacklist_uplay = []
         if show:
             messagebox.showinfo("Success", "The values have been reset")
 
@@ -546,6 +809,16 @@ class callback_to:  # Function to call a different widget set, I tried to turn t
         widgets2_1()
 
     @staticmethod
+    def widgets3():
+        destroy_rebuild.frame_rebuild(1)
+        widgets3()
+
+    @staticmethod
+    def uplay():
+        destroy_rebuild.frame_rebuild(1)
+        uplay_widget()
+
+    @staticmethod
     def commit(platform):
         destroy_rebuild.frame_rebuild()
         commit_changes(platform)
@@ -570,6 +843,11 @@ class preview_window:
             var_rep_show = var_rep_origin
             var_blacklist_show = var_blacklist_origin
             id_show = item_id
+        elif platform == "uplay":
+            var_en_show = var_en_uplay
+            var_rep_show = var_rep_uplay
+            var_blacklist_show = var_blacklist_uplay
+            id_show = uplay_id
 
         common_widgets.change_size(1000, 200)
 
@@ -611,6 +889,8 @@ class preview_window:
             common_widgets.button(left_frame, "Return", callback_to.epic, 5, 5, N)
         elif platform == "origin":
             common_widgets.button(left_frame, "Return", callback_to.origin, 5, 5, N)
+        elif platform == "uplay":
+            common_widgets.button(left_frame, "Return", callback_to.uplay, 5, 5, N)
 
 
 # The way this GUI is coded is, in essence, the calling collections of widgets, they are enumerated mainly because
@@ -661,7 +941,12 @@ def widgets():  # Initial window's widgets
 
 def steam_widget():
     logo.steam(frame, 15, 15)
-    common_widgets.change_size(1000, 300)  # Top left and top right for more options if need be ;)
+    common_widgets.change_size(1000, 300)
+
+    # Searcher
+    common_widgets.button(right_frame, "ID Searcher", id_searcher.steam_searcher, 5, 5, N)
+    common_widgets.separator(right_frame, "horizontal", "x", 5, 5)
+
     # Enable or Disable injection
     common_widgets.label(left_frame, "Enable or disable DDL injection", 5, 5, N)
     common_widgets.button(left_frame, "Enable", lambda *args: steam_values.enable("enable"), 5, 5)
@@ -772,6 +1057,44 @@ def origin_widget():
     common_widgets.button(right_frame, "Commit changes", lambda *args: callback_to.commit("origin"), 5, 5, S)
 
 
+def uplay_widget():
+    logo.uplay(frame, 15, 15)
+    common_widgets.change_size(1000, 325)
+
+    # Enable or Disable injection
+    common_widgets.label(left_frame, "Enable or disable DDL injection", 5, 5, N)
+    common_widgets.button(left_frame, "Enable", lambda *args: uplay_values.enable("enable"), 5, 5)
+    common_widgets.button(left_frame, "Disable", lambda *args: uplay_values.enable("disable"), 5, 5)
+
+    # Replicate or not
+    common_widgets.label(right_frame, "Enable or disable replication", 5, 5, N)
+    common_widgets.button(right_frame, "Enable", lambda *args: uplay_values.replicate("enable"), 5, 5)
+    common_widgets.button(right_frame, "Disable", lambda *args: uplay_values.replicate("disable"), 5, 5)
+
+    # Blacklist or remove from same, and AppID
+    common_widgets.label(frame, "Item ID to blacklist or remove from blacklist", 5, 5, 0)
+    common_widgets.button(low_frame, "Blacklist", lambda *args: uplay_values.blacklist("blacklist"), 5, 5)
+
+    global uplay_id_enter  # Needs to be declared here, otherwise I can't get the contents #
+    uplay_id_enter = ttk.Entry(frame, width=15, justify="center")
+    uplay_id_enter.insert(0, "Uplay ID")
+    uplay_id_enter.pack(padx=5, pady=5)
+
+    common_widgets.button(low_frame, "Remove from blacklist", lambda *args: uplay_values.blacklist("remove_blacklist"),
+                          5, 5)
+
+    # Previous, revert and next widgets
+    common_widgets.separator(low_frame, "horizontal", "x", 10)
+    common_widgets.button(low_frame, "Revert changes", lambda *args: destroy_rebuild.reset_values(1), 5, 5, S)
+
+    common_widgets.separator(left_frame, "horizontal", "x", 10)
+    common_widgets.button(left_frame, "Back", lambda: callback_to.widgets3(), 5, 5, S)
+
+    common_widgets.separator(right_frame, "horizontal", "x", 10)
+
+    common_widgets.button(right_frame, "Commit changes", lambda *args: callback_to.commit("uplay"), 5, 5, S)
+
+
 def widgets2():  # Logos need to be preloaded, but that'll be done on a later release
     common_widgets.change_size(896, 175)
     common_widgets.label(frame, "Please select a platform for modification, you may also\n backup your current "
@@ -780,7 +1103,9 @@ def widgets2():  # Logos need to be preloaded, but that'll be done on a later re
     common_widgets.image_button(right_frame, "Origin", self_path + "/logos/origin_logo.png", 22, 27, LEFT,
                                 callback_to.origin, 5, 5, N)
     common_widgets.separator(right_frame, "horizontal", "x", 10)
-    common_widgets.button(right_frame, "Options info", callback_to.widgets2_1, 5, 5)
+
+    common_widgets.button(right_frame, "Next", callback_to.widgets3, 5, 5)
+
     common_widgets.image_button(left_frame, "Epic", self_path + "/logos/epic.png", 35, 30, LEFT, callback_to.epic,
                                 5, 5, N)
     common_widgets.separator(left_frame, "horizontal", "x", 10)
@@ -813,7 +1138,10 @@ def widgets2_1():  # Options info
                     "-\nYou may input the desired DLC, Item or App IDs and remove them from or include them in the "
                     "Blacklist")
 
-    common_widgets.button(frame, "Return", callback_to.widgets2, 5, 10, N)
+    if f_w_3 == 1:  # At some point I'll make this option appear on widgets2 as well.
+        common_widgets.button(frame, "Return", callback_to.widgets3, 5, 10, N)
+    else:
+        common_widgets.button(frame, "Return", callback_to.widgets2, 5, 10, N)
     common_widgets.separator(frame, "horizontal", "x", 5)
     lbl_var = StringVar()
     lbl_var.set("Please select an option")  # Default value
@@ -825,6 +1153,25 @@ def widgets2_1():  # Options info
     common_widgets.button(low_frame, "Replication", print_replication, 5, 5, S)
     common_widgets.separator(right_frame, "horizontal", "x", 5)
     common_widgets.button(right_frame, "Blacklisting", print_blacklist, 5, 5, SE)
+
+
+def widgets3():
+    global f_w_3
+    f_w_3 = 1
+    common_widgets.change_size(896, 175)
+    common_widgets.separator(left_frame, "horizontal", "x", 10)
+    common_widgets.button(left_frame, "Back", callback_to.widgets2, 5, 5, S)
+
+    common_widgets.label(frame, "Please select a platform for modification, you may also\n backup your current "
+                                "configuration file or learn what these options do in more detail.", 5, 15, N, "center")
+    common_widgets.image_button(frame, "Uplay R1", self_path + "/logos/uplay_logo.png", 25, 22, LEFT,
+                                callback_to.uplay, 5, 5, N)
+
+    common_widgets.separator(frame, "horizontal", "x", 8)
+    common_widgets.button(frame, "Backup current configuration", json_file.backup, 5, 5, S)
+
+    common_widgets.separator(right_frame, "horizontal", "x", 10)
+    common_widgets.button(right_frame, "Options info", callback_to.widgets2_1, 5, 5)
 
 
 def commit_changes(platform):
@@ -936,6 +1283,42 @@ def commit_changes(platform):
             json_file.commit("origin")
         if preview_ask is None:
             callback_to.origin()
+
+    elif platform == "uplay":
+        global enable_uplay, replicate_uplay, blacklist_uplay, ids_uplay
+
+        if not var_en_uplay:
+            enable_uplay = "Skip"
+        else:
+            if var_en_uplay == "enable":
+                enable_uplay = True
+            else:
+                enable_uplay = False
+        if not var_rep_uplay:
+            replicate_uplay = "Skip"
+        else:
+            if var_rep_uplay == "enable":
+                replicate_uplay = True
+            elif var_rep_uplay == "disable":
+                replicate_uplay = False
+        if not var_blacklist_uplay:
+            blacklist_uplay = False
+        else:
+            blacklist_uplay = var_blacklist_uplay
+
+        if not uplay_id or uplay_id == "Uplay ID":
+            ids_uplay = False
+        else:
+            ids_uplay = uplay_id
+
+        preview_ask = messagebox.askyesnocancel("Preview", "Do you wish to preview the changes?")
+
+        if preview_ask is True:  # Buggy if many IDs have been added.
+            preview_window.show("uplay")
+        if preview_ask is False:
+            json_file.commit("uplay")
+        if preview_ask is None:
+            callback_to.uplay()
 
 
 # Start #
