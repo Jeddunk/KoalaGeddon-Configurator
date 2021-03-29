@@ -83,6 +83,12 @@ class steam_values:
         print(var_blacklist_steam)
         print(appid)
 
+    @staticmethod
+    def family_share(t_or_f):
+        global var_f_share_steam
+        var_f_share_steam = t_or_f  # Singular value allowed
+        print(var_f_share_steam)
+
 
 class epic_values:
     @staticmethod
@@ -315,7 +321,15 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 if to_add:
                     commit["platforms"]["Steam"]["blacklist"].extend(to_add)
 
-            if skip_value == 3:
+            if share:
+                share_value = commit["platforms"]["Steam"]["unlock_shared_library"]
+                if share_value is True:
+                    commit["platforms"]["Steam"]["unlock_shared_library"] = False
+                else:
+                    commit["platforms"]["Steam"]["unlock_shared_library"] = True
+            if skip_value == 3 and platform != "steam":
+                print("No change")
+            elif platform == "steam" and skip_value == 4:
                 print("No change")
             else:
                 with open(paths.get_json_path(), "w") as outfile:
@@ -744,7 +758,7 @@ class destroy_rebuild:  # This function will delete or reset stuff
     @staticmethod
     def reset_values(*show):  # Every value stored will be reset unless it is needed
         global appid, dlc_id, item_id, uplay_id, var_blacklist_steam, var_blacklist_epic, var_blacklist_origin \
-            , var_blacklist_uplay
+            , var_blacklist_uplay, var_f_share_steam
 
         appid = []
         dlc_id = []
@@ -754,6 +768,7 @@ class destroy_rebuild:  # This function will delete or reset stuff
         var_blacklist_epic = []
         var_blacklist_origin = []
         var_blacklist_uplay = []
+        var_f_share_steam = None
         if show:
             messagebox.showinfo("Success", "The values have been reset")
 
@@ -855,6 +870,14 @@ class preview_window:
         replicate = "No changes were made"
         blacklist = "No changes were made"
         ids = "No changes were made"
+        f_share = "No changes were made"
+        if platform == "steam" and share is True:
+            file = json_file.get_data()
+            get_state = (file["platforms"]["Steam"]["unlock_shared_library"])
+            if get_state is False:
+                f_share = "Enabled"
+            else:
+                f_share = "Disabled"
         if var_en_show:
             enable = var_en_show
         if var_rep_show:
@@ -864,6 +887,8 @@ class preview_window:
         if id_show or "AppID" or "Item ID" or "DLC ID" not in id_show:
             ids = id_show
 
+        if platform == "steam":
+            f_share_lbl = "Toggle Family Share Bypass: " + f_share
         enable_lbl = "Enable DLL injection: " + enable
         replicate_lbl = "Enable replication: " + replicate
         blacklist_lbl = "List of removals from or additions to the blacklist: " + str(blacklist).replace("remove_"
@@ -874,8 +899,10 @@ class preview_window:
 
         if not ids:  # Patch for bad coding skill :(
             ids_lbl = "List of ID's to remove or add to the blacklist: No changes were made"
-        common_widgets.label(frame, enable_lbl, 5, 15, 0)
+        common_widgets.label(frame, enable_lbl, 5, 5, 0)
         common_widgets.label(frame, replicate_lbl, 5, 5, 0)
+        if platform == "steam":
+            common_widgets.label(frame, f_share_lbl, 5, 5, 0)
         common_widgets.separator(frame, "horizontal", "x", 5, 5)
         common_widgets.label(frame, "The following lists are ordered in relation to each other", 5, 5, 0)
         common_widgets.separator(frame, "horizontal", "x", 5, 5)
@@ -946,6 +973,10 @@ def steam_widget():
     # Searcher
     common_widgets.button(right_frame, "ID Searcher", id_searcher.steam_searcher, 5, 5, N)
     common_widgets.separator(right_frame, "horizontal", "x", 5, 5)
+
+    # Family Share
+    common_widgets.button(left_frame, "Family Share Toggle", steam_values.family_share("toggle"), 5, 5, N)
+    common_widgets.separator(left_frame, "horizontal", "x", 5, 5)
 
     # Enable or Disable injection
     common_widgets.label(left_frame, "Enable or disable DDL injection", 5, 5, N)
@@ -1177,7 +1208,7 @@ def widgets3():
 def commit_changes(platform):
     if platform == "steam":
         # Not very pretty now is it?
-        global enable_steam, replicate_steam, blacklist_steam, ids_steam
+        global enable_steam, replicate_steam, blacklist_steam, ids_steam, share
 
         if not var_en_steam:
             enable_steam = "Skip"
@@ -1203,6 +1234,10 @@ def commit_changes(platform):
         else:
             ids_steam = appid
 
+        if not var_f_share_steam or var_f_share_steam is None:
+            share = False
+        else:
+            share = True
         preview_ask = messagebox.askyesnocancel("Preview", "Do you wish to preview the changes?")
 
         if preview_ask is True:  # Buggy if many IDs have been added.
