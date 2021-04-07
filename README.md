@@ -17,6 +17,7 @@ Code is rather bloated at this point, I will reformat it...eventually :)
 - Better feedback to the user.
 - More checks for IDs.
 - More ID searchers.
+- EA Desktop integration (coming next version)
 
 # Known bugs
 - Interface can get buggy if too many IDs are changed at once.
