@@ -237,7 +237,8 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                 "// Origin integration with other stores", "").replace("// Ubisoft integration with "
                                                                        "other stores", "").replace("// Steam",
                                                                                                    "").replace(
-                "// Origin", "").replace("// Ubisoft", "").replace("// Use aUplayId from the generated log file", "")
+                "// Origin", "").replace("// Ubisoft", "").replace("// Use aUplayId from the generated log file", "").\
+                replace("// Use productId from Unlocker64.EADesktop.log", "").replace("// EA Desktop", "")
             return data
 
     @staticmethod
@@ -252,6 +253,7 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
             with open(paths.get_json_path(), "rt") as f:
                 data_raw = f.read()
                 data = json.loads(data_raw)
+
         except json.decoder.JSONDecodeError:  # Comments were found.
             data = json_file.fixed_json()
         return data
