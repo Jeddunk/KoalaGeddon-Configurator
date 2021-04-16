@@ -11,13 +11,12 @@ Code is rather bloated at this point, I will reformat it...eventually :)
 
 # Installation/Usage
 - Just download and run the compiled binaries from [here](https://github.com/g-yui/KoalaGeddon-Configurator/releases).
-- You can run from source without need for a specific pyenv, just use pip to install Pillow, Requests and TtkThemes and run main.py.
+- You can run from source without need for a specific pyenv, just use pip to install Pillow, Requests, TtkThemes and run main.py.
 
 # Missing features
 - Better feedback to the user.
 - More checks for IDs.
 - More ID searchers.
-- EA Desktop integration (coming next version)
 
 # Known bugs
 - Interface can get buggy if too many IDs are changed at once.
