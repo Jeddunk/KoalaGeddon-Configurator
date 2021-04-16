@@ -44,19 +44,23 @@ var_en_steam = None
 var_en_epic = None
 var_en_origin = None
 var_en_uplay = None
+var_en_eaDesktop = None
 var_rep_steam = None
 var_rep_epic = None
 var_rep_origin = None
 var_rep_uplay = None
+var_rep_eaDesktop = None
 # Some variables for id and blacklist values, they are all lists #
 appid = []
 dlc_id = []
 item_id = []
 uplay_id = []
+ea_item_id = []
 var_blacklist_steam = []
 var_blacklist_epic = []
 var_blacklist_origin = []
 var_blacklist_uplay = []
+var_blacklist_eaDesktop = []
 
 
 class steam_values:
@@ -166,6 +170,32 @@ class uplay_values:
         uplay_values.uplay_id()
         print(var_blacklist_uplay)
         print(uplay_id)
+
+
+class eaDesktop_values:
+    @staticmethod
+    def enable(en_or_dis):
+        global var_en_eaDesktop
+        var_en_eaDesktop = en_or_dis
+        print(var_en_eaDesktop)
+
+    @staticmethod
+    def replicate(rep_or_not):
+        global var_rep_eaDesktop
+        var_rep_eaDesktop = rep_or_not
+        print(var_rep_eaDesktop)
+
+    @staticmethod
+    def ea_item_id():
+        id_ea = ea_item_id_enter.get()
+        ea_item_id.append(id_ea)
+
+    @staticmethod
+    def blacklist(yes_or_no):
+        var_blacklist_eaDesktop.append(yes_or_no)
+        eaDesktop_values.ea_item_id()
+        print(var_blacklist_eaDesktop)
+        print(ea_item_id)
 
 
 class paths:
@@ -470,6 +500,50 @@ class json_file:  # This is the config file itself, it's handling, backup, etc.
                     messagebox.showinfo("Success", "The file has been modified")
                     print(commit["platforms"]["UplayR1"])
             callback_to.widgets3()
+        elif platform == "ea":
+            commit = json_file.get_data()
+            skip_value = 0
+            print(enable_ea)
+            print(replicate_ea)
+            if "Skip" in str(enable_ea):
+                print("Skip")
+                skip_value = skip_value + 1
+            else:
+                commit["platforms"]["EADesktop"]["enabled"] = enable_ea
+
+            if "Skip" in str(replicate_ea):
+                print("Skip")
+                skip_value = skip_value + 1
+            else:
+                commit["platforms"]["EADesktop"]["replicate"] = replicate_ea
+            to_add = []
+            index = 0
+            if blacklist_ea is False:
+                print("Skip")
+                skip_value = skip_value + 1
+            else:
+                for _ in blacklist_ea:  # This will *in theory* recursively check for each appid and blacklist
+                    # value for each index and resolve if it should add or remove it.
+                    if "remove" in blacklist_ea[index]:
+                        print("Removing")
+                        self_item_id = ea_item_id[index]
+                        self_index = commit["platforms"]["EADesktop"]["blacklist"].index(self_item_id)
+                        del commit["platforms"]["EADesktop"]["blacklist"][self_index]
+
+                    elif "remove" not in blacklist_ea[index]:
+                        to_add.append(ea_item_id[index])
+                    index = index + 1
+                if to_add:
+                    commit["platforms"]["EADesktop"]["blacklist"].extend(to_add)
+
+            if skip_value == 3:
+                print("No change")
+            else:
+                with open(paths.get_json_path(), "w") as outfile:
+                    json.dump(commit, outfile, indent=1)
+                    messagebox.showinfo("Success", "The file has been modified")
+                    print(commit["platforms"]["EADesktop"])
+            callback_to.widgets2()
 
 
 class id_searcher:  # Put together with twigs and tape, I'll clean the code, add some basic multithreading
@@ -655,12 +729,14 @@ steam_logo = Image.open(self_path + "/logos/steam.png")
 epic_logo = Image.open(self_path + "/logos/epic.png")
 origin_logo = Image.open(self_path + "/logos/origin.png")
 uplay_logo = Image.open(self_path + "/logos/uplay.png")
+ea_logo = Image.open(self_path + "/logos/Trash.png")
 
 # Resize to adequate size, if High DPI is to be added, this will have to be changed accordingly.
 steam_logo_resize = steam_logo.resize((160, 50), Image.ANTIALIAS)
 epic_logo_resize = epic_logo.resize((120, 100), Image.ANTIALIAS)
 origin_logo_resize = origin_logo.resize((150, 58), Image.ANTIALIAS)
 uplay_logo_resize = uplay_logo.resize((150, 65), Image.ANTIALIAS)
+ea_logo_resize = ea_logo.resize((100, 100), Image.ANTIALIAS)
 
 
 class logo:  # These are the logos for the supported platforms, it automatically packs them :D}
@@ -691,6 +767,13 @@ class logo:  # These are the logos for the supported platforms, it automatically
         uplay_string = Label(frame_self, image=logo_itself)
         uplay_string.image = logo_itself
         uplay_string.pack(padx=x, pady=y)
+
+    @staticmethod
+    def ea(frame_self, x, y):
+        logo_itself = ImageTk.PhotoImage(ea_logo_resize)
+        ea_string = Label(frame_self, image=logo_itself)
+        ea_string.image = logo_itself
+        ea_string.pack(padx=x, pady=y)
 
 
 class common_widgets:
@@ -760,16 +843,18 @@ class destroy_rebuild:  # This function will delete or reset stuff
     @staticmethod
     def reset_values(*show):  # Every value stored will be reset unless it is needed
         global appid, dlc_id, item_id, uplay_id, var_blacklist_steam, var_blacklist_epic, var_blacklist_origin \
-            , var_blacklist_uplay, var_f_share_steam
+            , var_blacklist_uplay, var_f_share_steam, ea_item_id, var_blacklist_eaDesktop
 
         appid = []
         dlc_id = []
         item_id = []
         uplay_id = []
+        ea_item_id = []
         var_blacklist_steam = []
         var_blacklist_epic = []
         var_blacklist_origin = []
         var_blacklist_uplay = []
+        var_blacklist_eaDesktop = []
         var_f_share_steam = None
         if show:
             messagebox.showinfo("Success", "The values have been reset")
@@ -799,6 +884,11 @@ class callback_to:  # Function to call a different widget set, I tried to turn t
     def origin():
         destroy_rebuild.frame_rebuild(1)
         origin_widget()
+
+    @staticmethod
+    def ea():
+        destroy_rebuild.frame_rebuild(1)
+        ea_widget()
 
     @staticmethod
     def epic():
@@ -865,6 +955,11 @@ class preview_window:
             var_rep_show = var_rep_uplay
             var_blacklist_show = var_blacklist_uplay
             id_show = uplay_id
+        elif platform == "ea":
+            var_en_show = var_en_eaDesktop
+            var_rep_show = var_rep_eaDesktop
+            var_blacklist_show = var_blacklist_eaDesktop
+            id_show = ea_item_id
 
         common_widgets.change_size(1000, 200)
 
@@ -920,6 +1015,8 @@ class preview_window:
             common_widgets.button(left_frame, "Return", callback_to.origin, 5, 5, N)
         elif platform == "uplay":
             common_widgets.button(left_frame, "Return", callback_to.uplay, 5, 5, N)
+        elif platform == "ea":
+            common_widgets.button(left_frame, "Return", callback_to.ea, 5, 5, N)
 
 
 # The way this GUI is coded is, in essence, the calling collections of widgets, they are enumerated mainly because
@@ -1128,6 +1225,44 @@ def uplay_widget():
     common_widgets.button(right_frame, "Commit changes", lambda *args: callback_to.commit("uplay"), 5, 5, S)
 
 
+def ea_widget():
+    logo.ea(frame, 15, 15)
+    common_widgets.change_size(1000, 350)
+
+    # Enable or Disable injection
+    common_widgets.label(left_frame, "Enable or disable DDL injection", 5, 5, N)
+    common_widgets.button(left_frame, "Enable", lambda *args: eaDesktop_values.enable("enable"), 5, 5)
+    common_widgets.button(left_frame, "Disable", lambda *args: eaDesktop_values.enable("disable"), 5, 5)
+
+    # Replicate or not
+    common_widgets.label(right_frame, "Enable or disable replication", 5, 5, N)
+    common_widgets.button(right_frame, "Enable", lambda *args: eaDesktop_values.replicate("enable"), 5, 5)
+    common_widgets.button(right_frame, "Disable", lambda *args: eaDesktop_values.replicate("disable"), 5, 5)
+
+    # Blacklist or remove from same, and AppID
+    common_widgets.label(frame, "Item ID to blacklist or remove from blacklist", 5, 5, 0)
+    common_widgets.button(low_frame, "Blacklist", lambda *args: eaDesktop_values.blacklist("blacklist"), 5, 5)
+
+    global ea_item_id_enter  # Needs to be declared here, otherwise I can't get the contents #
+    ea_item_id_enter = ttk.Entry(frame, width=15, justify="center")
+    ea_item_id_enter.insert(0, "Item ID")
+    ea_item_id_enter.pack(padx=5, pady=5)
+
+    common_widgets.button(low_frame, "Remove from blacklist", lambda *args: eaDesktop_values.blacklist("remove_blacklist"),
+                          5, 5)
+
+    # Previous, revert and next widgets
+    common_widgets.separator(low_frame, "horizontal", "x", 10)
+    common_widgets.button(low_frame, "Revert changes", lambda *args: destroy_rebuild.reset_values(1), 5, 5, S)
+
+    common_widgets.separator(left_frame, "horizontal", "x", 10)
+    common_widgets.button(left_frame, "Back", lambda: callback_to.widgets2(), 5, 5, S)
+
+    common_widgets.separator(right_frame, "horizontal", "x", 10)
+
+    common_widgets.button(right_frame, "Commit changes", lambda *args: callback_to.commit("ea"), 5, 5, S)
+
+
 def widgets2():  # Logos need to be preloaded, but that'll be done on a later release
     common_widgets.change_size(896, 175)
     common_widgets.label(frame, "Please select a platform for modification, you may also\n backup your current "
@@ -1192,14 +1327,17 @@ def widgets3():
     global f_w_3
     f_w_3 = 1
     common_widgets.change_size(896, 175)
-    common_widgets.separator(left_frame, "horizontal", "x", 10)
-    common_widgets.button(left_frame, "Back", callback_to.widgets2, 5, 5, S)
 
     common_widgets.label(frame, "Please select a platform for modification, you may also\n backup your current "
                                 "configuration file or learn what these options do in more detail.", 5, 15, N, "center")
-    common_widgets.image_button(frame, "Uplay R1", self_path + "/logos/uplay_logo.png", 25, 22, LEFT,
+    common_widgets.image_button(left_frame, "Uplay R1", self_path + "/logos/uplay_logo.png", 25, 22, LEFT,
                                 callback_to.uplay, 5, 5, N)
 
+    common_widgets.separator(left_frame, "horizontal", "x", 10)
+    common_widgets.button(left_frame, "Back", callback_to.widgets2, 5, 5, S)
+
+    common_widgets.image_button(frame, "EA Desktop", self_path + "/logos/Trash.png", 23, 25, LEFT,
+                                callback_to.ea, 5, 5, N)
     common_widgets.separator(frame, "horizontal", "x", 8)
     common_widgets.button(frame, "Backup current configuration", json_file.backup, 5, 5, S)
 
@@ -1356,6 +1494,43 @@ def commit_changes(platform):
             json_file.commit("uplay")
         if preview_ask is None:
             callback_to.uplay()
+
+    elif platform == "ea":
+        global enable_ea, replicate_ea, blacklist_ea, ids_ea
+
+        if not var_en_eaDesktop:
+            enable_ea = "Skip"
+        else:
+            if var_en_eaDesktop == "enable":
+                enable_ea = True
+            else:
+                enable_ea = False
+        if not var_rep_eaDesktop:
+            replicate_ea = "Skip"
+        else:
+            if var_rep_eaDesktop == "enable":
+                replicate_ea = True
+            elif var_rep_eaDesktop == "disable":
+                replicate_ea = False
+        if not var_blacklist_eaDesktop:
+            blacklist_ea = False
+        else:
+            blacklist_ea = var_blacklist_eaDesktop
+
+        if not ea_item_id or ea_item_id == "Item ID":
+            ids_ea = False
+        else:
+            ids_ea = ea_item_id
+
+        preview_ask = messagebox.askyesnocancel("Preview", "Do you wish to preview the changes?")
+
+        if preview_ask is True:  # Buggy if many IDs have been added.
+            preview_window.show("ea")
+        if preview_ask is False:
+            json_file.commit("ea")
+        if preview_ask is None:
+            callback_to.ea()
+
 
 
 # Start #
