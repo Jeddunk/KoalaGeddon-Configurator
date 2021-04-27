@@ -19,6 +19,9 @@ Code is rather bloated at this point, I will reformat it...eventually :)
 - More checks for IDs.
 - More ID searchers.
 
+# Plans for the future
+- Since this has somehow managed to get into the releases section I'm planning a complete reformatting of the code, and a change from Tkinter to Pyside 2, which would make the whole GUI part look and function better, plus refactor the scripts to make them more ordered, way more than having just a single main.py file :)
+
 # Known bugs
 - Interface can get buggy if too many IDs are changed at once.
 - Rather slugish at times.
