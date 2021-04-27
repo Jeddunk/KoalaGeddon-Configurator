@@ -1,8 +1,6 @@
 # Koalageddon-Configurator
 A extremely simple configuration tool for @acidicoala 's Koalageddon.
 
-Code is rather bloated at this point, I will reformat it...eventually :)
-
 # Features
 - Simple TTK GUI with the Breeze theme.
 - Will modify the configuration file (Config.jsonc) for each platform, by enabling or disabling injection and replication and by adding or removing id's from the blacklist.
@@ -13,11 +11,6 @@ Code is rather bloated at this point, I will reformat it...eventually :)
 # Installation/Usage
 - Just download and run the compiled binaries from [here](https://github.com/g-yui/KoalaGeddon-Configurator/releases).
 - You can run from source without the need for a specific pyenv, just use pip to install Pillow, Requests, TtkThemes and run main.py.
-
-# Missing features
-- Better feedback to the user.
-- More checks for IDs.
-- More ID searchers.
 
 # Plans for the future
 - Since this has somehow managed to get into the releases section I'm planning a complete reformatting of the code, and a change from Tkinter to Pyside 2, which would make the whole GUI part look and function better, plus refactor the scripts to make them more ordered, way more than having just a single main.py file :)
