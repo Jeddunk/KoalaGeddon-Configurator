@@ -21,6 +21,17 @@ Code is rather bloated at this point, I will reformat it...eventually :)
 
 # Plans for the future
 - Since this has somehow managed to get into the releases section I'm planning a complete reformatting of the code, and a change from Tkinter to Pyside 2, which would make the whole GUI part look and function better, plus refactor the scripts to make them more ordered, way more than having just a single main.py file :)
+- The following features are planned for the Qt Release:
+> - Better performance
+> - Better feedback to the user
+> - Support for themes and translations (since it's relatively easy to do) <br />
+> - Origin/EA Desktop search (via the [entitlements.json](https://github.com/acidicoala/public-entitlements/blob/main/origin/v1/entitlements.json) file) <br />
+> - Known Uplay entitlements (via the [products.jsonc](https://github.com/acidicoala/public-entitlements/blob/main/ubisoft/v1/products.jsonc) file) <br />
+> - Better Steam search <br />
+> - Epic Store search (help needed understanding GraphQL with Python for this one) <br />
+> - A Koalageddon update checker (will make a check through the public GitHub API to see if there's a change between the versions of the local config_version against the latest Config.jsonc file available) <br />
+> - unlock_dlc support for steam <br />
+> - Ignore and terminate options if "Advance options" boolean is enabled via custom config file for this GUI :) <br />
 
 # Known bugs
 - Interface can get buggy if too many IDs are changed at once.
